@@ -6,11 +6,13 @@ import (
 
 	"github.com/pavi6691/boilingdata-sdk-go/api"
 	"github.com/pavi6691/boilingdata-sdk-go/constants"
+	"github.com/pavi6691/boilingdata-sdk-go/service"
 	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
 )
 
 func main() {
-	handler := &api.Handler{Wsc: wsclient.NewWSSClient(constants.WssUrl, 0, nil)}
+	wsclient := wsclient.NewWSSClient(constants.WssUrl, 0, nil)
+	handler := &api.Handler{Wsc: wsclient, Service: service.Service{Wsc: wsclient}}
 	http.HandleFunc("/login", handler.Login)
 	http.HandleFunc("/connect", handler.ConnectWSS)
 	http.HandleFunc("/query", handler.Query)

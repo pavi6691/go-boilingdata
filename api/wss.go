@@ -5,9 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/pavi6691/boilingdata-sdk-go/service"
-	auth "github.com/pavi6691/boilingdata-sdk-go/service"
 )
 
 type WSSPayload struct {
@@ -33,7 +30,7 @@ func (h *Handler) ConnectWSS(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &wssPayload); err != nil {
 		log.Fatalf("failed to parse JSON: %v", err)
 	}
-	headers, err := auth.GetAWSSingingHeaders(wssPayload.WssURL)
+	headers, err := h.Service.GetAWSSingingHeaders(wssPayload.WssURL)
 	if err != nil {
 		http.Error(w, "Error preparing request", http.StatusInternalServerError)
 		return
@@ -53,23 +50,23 @@ func (h *Handler) GetSignedWSSUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !service.IsUserLoggedIn() {
+	if !h.Service.IsUserLoggedIn() {
 		http.Error(w, "User signed out, Please Login!", http.StatusUnauthorized)
 		return
 	}
 
-	idToken, err := service.AuthenticateUser("", "")
+	idToken, err := h.Service.AuthenticateUser("", "")
 	if err != nil {
 		http.Error(w, "Error : "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	headers, err := auth.GetSignedWssHeader(idToken)
+	headers, err := h.Service.GetSignedWssHeader(idToken)
 	if err != nil {
 		http.Error(w, "Error getting signed headers: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	sigedUrl, err := auth.GetSignedWssUrl(headers)
+	sigedUrl, err := h.Service.GetSignedWssUrl(headers)
 	if err != nil {
 		http.Error(w, "Error Signing wssUrl: "+err.Error(), http.StatusInternalServerError)
 		return

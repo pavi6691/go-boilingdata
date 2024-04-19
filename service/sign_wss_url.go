@@ -25,7 +25,7 @@ type AwsCredentials struct {
 	CredentialScope string
 }
 
-func GetSignedWssHeader(token string) (http.Header, error) {
+func (s *Service) GetSignedWssHeader(token string) (http.Header, error) {
 	creds, err := getAwsCredentialss(token)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func GetSignedWssHeader(token string) (http.Header, error) {
 	return header, err
 }
 
-func GetSignedWssUrl(headers http.Header) (string, error) {
+func (s *Service) GetSignedWssUrl(headers http.Header) (string, error) {
 	credential, signature, err := extractCredentialAndSignature(headers["Authorization"][0])
 	if err != nil {
 		log.Printf("Error Extracting Credential and Signature: " + err.Error())
@@ -109,7 +109,7 @@ func getAwsCredentialss(jwtIdToken string) (AwsCredentials, error) {
 	return awsCreds, nil
 }
 
-func GetAWSSingingHeaders(urlString string) (http.Header, error) {
+func (s *Service) GetAWSSingingHeaders(urlString string) (http.Header, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
 		return nil, err

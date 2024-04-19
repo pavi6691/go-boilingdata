@@ -6,16 +6,21 @@ import (
 	"time"
 
 	"github.com/pavi6691/boilingdata-sdk-go/constants"
+	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 )
 
+type Service struct {
+	Wsc *wsclient.WSSClient
+}
+
 var AuthResult *cognitoidentityprovider.AuthenticationResultType
 var timeWhenLastJwtTokenWasRecieved time.Time
 
-func AuthenticateUser(username, password string) (string, error) {
+func (s *Service) AuthenticateUser(username, password string) (string, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(constants.Region)},
 	)
@@ -26,9 +31,9 @@ func AuthenticateUser(username, password string) (string, error) {
 
 	cognitoClient := cognitoidentityprovider.New(sess)
 	var authInput *cognitoidentityprovider.InitiateAuthInput
-	if IsUserLoggedIn() && !IsTokenExpired() {
+	if s.IsUserLoggedIn() && !s.IsTokenExpired() {
 		return *AuthResult.IdToken, nil
-	} else if IsUserLoggedIn() {
+	} else if s.IsUserLoggedIn() {
 		log.Println("Token expired, Getting token with refresh token..")
 		authInput = &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow: aws.String("REFRESH_TOKEN_AUTH"),
@@ -97,13 +102,13 @@ func AuthenticateUser(username, password string) (string, error) {
 	return *authOutput.AuthenticationResult.IdToken, nil
 }
 
-func IsUserLoggedIn() bool {
+func (s *Service) IsUserLoggedIn() bool {
 	if AuthResult != nil && AuthResult.IdToken != nil {
 		return true
 	}
 	return false
 }
-func IsTokenExpired() bool {
+func (s *Service) IsTokenExpired() bool {
 	if AuthResult != nil && AuthResult.ExpiresIn != nil {
 		expirationTime := timeWhenLastJwtTokenWasRecieved.Add(time.Second * time.Duration(*AuthResult.ExpiresIn))
 		if !time.Now().After(expirationTime) {
