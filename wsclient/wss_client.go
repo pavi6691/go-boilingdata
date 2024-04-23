@@ -9,8 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pavi6691/boilingdata-sdk-go/constants"
-
+	"github.com/boilingdata/go-boilingdata/constants"
 	"github.com/gorilla/websocket"
 )
 

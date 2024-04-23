@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
+	"github.com/boilingdata/go-boilingdata/wsclient"
 )
 
 type QueryService struct {

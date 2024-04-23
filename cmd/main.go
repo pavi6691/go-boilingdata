@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/pavi6691/boilingdata-sdk-go/api"
-	"github.com/pavi6691/boilingdata-sdk-go/constants"
-	"github.com/pavi6691/boilingdata-sdk-go/service"
-	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
+	"github.com/boilingdata/go-boilingdata/api"
+	"github.com/boilingdata/go-boilingdata/constants"
+	"github.com/boilingdata/go-boilingdata/service"
+	"github.com/boilingdata/go-boilingdata/wsclient"
 )
 
 func main() {

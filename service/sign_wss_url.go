@@ -9,13 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pavi6691/boilingdata-sdk-go/constants"
-
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	"github.com/boilingdata/go-boilingdata/constants"
 )
 
 type AwsCredentials struct {

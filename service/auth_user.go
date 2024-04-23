@@ -5,11 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/pavi6691/boilingdata-sdk-go/constants"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/boilingdata/go-boilingdata/constants"
 )
 
 type Auth struct {
