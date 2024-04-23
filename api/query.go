@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/boilingdata/go-boilingdata/service"
-	"github.com/boilingdata/go-boilingdata/wsclient"
+	"github.com/pavi6691/go-boilingdata/service"
+	"github.com/pavi6691/go-boilingdata/wsclient"
 )
 
 type Handler struct {

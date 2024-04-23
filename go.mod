@@ -1,4 +1,4 @@
-module github.com/boilingdata/go-boilingdata
+module github.com/pavi6691/go-boilingdata
 
 go 1.22.1
 

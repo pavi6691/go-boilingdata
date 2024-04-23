@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boilingdata/go-boilingdata/constants"
 	"github.com/gorilla/websocket"
+	"github.com/pavi6691/go-boilingdata/constants"
 )
 
 // WSSClient represents the WebSocket client.
