@@ -59,28 +59,32 @@ func (s *QueryService) Query(query string) ([]Response, error) {
 		}
 	}
 	s.Wsc.SendMessage(query)
-	response := s.ReadMessage()
-	if response == nil {
-		return []Response{}, fmt.Errorf("internal Server Error, could not read message from websocket")
+	response, err := s.ReadMessage()
+	if response == nil || err != nil {
+		errorMessage := ""
+		if err != nil {
+			errorMessage = err.Error()
+		}
+		return []Response{}, fmt.Errorf("internal Server Error, could not read message from websocket -> " + errorMessage)
 	}
 	return response, nil
 
 }
 
-func (s *QueryService) ReadMessage() []Response {
+func (s *QueryService) ReadMessage() ([]Response, error) {
 	var responses []Response
 	totMessages := -1
 	for {
 		_, message, err := s.Wsc.Conn.ReadMessage()
 		if err != nil {
 			log.Println("read:", err)
-			break
+			return []Response{}, err
 		}
 		var response Response
 		err = json.Unmarshal([]byte(message), &response)
 		if err != nil {
 			log.Println("Error parsing JSON:", err)
-			return []Response{}
+			return []Response{}, err
 		}
 		responses = append(responses, response)
 		if response.TotalSubBatches <= 0 {
@@ -93,5 +97,5 @@ func (s *QueryService) ReadMessage() []Response {
 			break
 		}
 	}
-	return responses
+	return responses, nil
 }
