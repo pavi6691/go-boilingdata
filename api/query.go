@@ -1,11 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/pavi6691/go-boilingdata/service"
-	"github.com/pavi6691/go-boilingdata/wsclient"
+	"github.com/boilingdata/go-boilingdata/service"
+	"github.com/boilingdata/go-boilingdata/wsclient"
 )
 
 type Handler struct {
@@ -39,6 +40,11 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 	// Set response content type to JSON
 	w.Header().Set("Content-Type", "application/json")
 	// Write JSON response to the response body
-	w.Write(response)
+	responseJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		http.Error(w, "Could marshal response", http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseJSON)
 
 }

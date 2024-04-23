@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	"github.com/pavi6691/go-boilingdata/constants"
+	"github.com/boilingdata/go-boilingdata/constants"
 )
 
 type Auth struct {
