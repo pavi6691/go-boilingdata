@@ -12,7 +12,7 @@ import (
 
 func main() {
 	wsclient := wsclient.NewWSSClient(constants.WssUrl, 0, nil)
-	handler := &api.Handler{Wsc: wsclient, Service: service.Service{Wsc: wsclient}}
+	handler := &api.Handler{Wsc: wsclient, QueryService: service.QueryService{Wsc: wsclient, Auth: service.Auth{}}}
 	http.HandleFunc("/login", handler.Login)
 	http.HandleFunc("/connect", handler.ConnectWSS)
 	http.HandleFunc("/query", handler.Query)

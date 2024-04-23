@@ -4,7 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
 )
+
+type QueryService struct {
+	Wsc  *wsclient.WSSClient
+	Auth Auth
+}
 
 type Response struct {
 	MessageType       string                   `json:"messageType"`
@@ -33,15 +40,15 @@ type Tag struct {
 	Value string `json:"value"`
 }
 
-func (s *Service) Query(query string) ([]byte, error) {
+func (s *QueryService) Query(query string) ([]byte, error) {
 
 	// If web socket is closed, in case of timeout/user signout/os intruptions etc
 	if s.Wsc.IsWebSocketClosed() {
-		idToken, err := s.AuthenticateUser("", "")
+		idToken, err := s.Auth.AuthenticateUser()
 		if err != nil {
 			return nil, fmt.Errorf("Error : " + err.Error())
 		}
-		header, err := s.GetSignedWssHeader(idToken)
+		header, err := s.Auth.GetSignedWssHeader(idToken)
 		if err != nil {
 			return nil, fmt.Errorf("Error Signing wssUrl: " + err.Error())
 		}
@@ -60,7 +67,7 @@ func (s *Service) Query(query string) ([]byte, error) {
 
 }
 
-func (s *Service) ReadMessage() []byte {
+func (s *QueryService) ReadMessage() []byte {
 	var responses []Response
 	totMessages := -1
 	for {

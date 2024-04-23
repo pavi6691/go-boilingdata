@@ -32,7 +32,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to parse JSON: %v", http.StatusInternalServerError)
 		return
 	}
-	_, err = h.Service.AuthenticateUser(creds.UserName, creds.Password)
+	h.QueryService.Auth.UserName = creds.UserName
+	h.QueryService.Auth.Password = creds.Password
+	_, err = h.QueryService.Auth.AuthenticateUser()
 	if err != nil {
 		http.Error(w, "Error : "+err.Error(), http.StatusInternalServerError)
 		return

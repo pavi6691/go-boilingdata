@@ -9,8 +9,8 @@ import (
 )
 
 type Handler struct {
-	Wsc     *wsclient.WSSClient
-	Service service.Service
+	Wsc          *wsclient.WSSClient
+	QueryService service.QueryService
 }
 
 func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.Service.IsUserLoggedIn() {
+	if !h.QueryService.Auth.IsUserLoggedIn() {
 		http.Error(w, "User signed out, Please Login!", http.StatusUnauthorized)
 		return
 	}
@@ -31,7 +31,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.Service.Query(string(body))
+	response, err := h.QueryService.Query(string(body))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

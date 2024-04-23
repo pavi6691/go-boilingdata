@@ -6,21 +6,21 @@ import (
 	"time"
 
 	"github.com/pavi6691/boilingdata-sdk-go/constants"
-	"github.com/pavi6691/boilingdata-sdk-go/wsclient"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 )
 
-type Service struct {
-	Wsc *wsclient.WSSClient
+type Auth struct {
+	UserName string
+	Password string
 }
 
 var AuthResult *cognitoidentityprovider.AuthenticationResultType
 var timeWhenLastJwtTokenWasRecieved time.Time
 
-func (s *Service) AuthenticateUser(username, password string) (string, error) {
+func (s *Auth) AuthenticateUser() (string, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(constants.Region)},
 	)
@@ -49,8 +49,8 @@ func (s *Service) AuthenticateUser(username, password string) (string, error) {
 		authInput = &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow: aws.String("USER_PASSWORD_AUTH"),
 			AuthParameters: map[string]*string{
-				"USERNAME": aws.String(username),
-				"PASSWORD": aws.String(password),
+				"USERNAME": aws.String(s.UserName),
+				"PASSWORD": aws.String(s.Password),
 				"POOL_ID":  aws.String(constants.PoolID),
 			},
 			ClientId: aws.String(constants.ClientID),
@@ -102,13 +102,13 @@ func (s *Service) AuthenticateUser(username, password string) (string, error) {
 	return *authOutput.AuthenticationResult.IdToken, nil
 }
 
-func (s *Service) IsUserLoggedIn() bool {
+func (s *Auth) IsUserLoggedIn() bool {
 	if AuthResult != nil && AuthResult.IdToken != nil {
 		return true
 	}
 	return false
 }
-func (s *Service) IsTokenExpired() bool {
+func (s *Auth) IsTokenExpired() bool {
 	if AuthResult != nil && AuthResult.ExpiresIn != nil {
 		expirationTime := timeWhenLastJwtTokenWasRecieved.Add(time.Second * time.Duration(*AuthResult.ExpiresIn))
 		if !time.Now().After(expirationTime) {

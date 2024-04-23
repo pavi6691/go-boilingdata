@@ -30,7 +30,7 @@ func (h *Handler) ConnectWSS(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &wssPayload); err != nil {
 		log.Fatalf("failed to parse JSON: %v", err)
 	}
-	headers, err := h.Service.GetAWSSingingHeaders(wssPayload.WssURL)
+	headers, err := h.QueryService.Auth.GetAWSSingingHeaders(wssPayload.WssURL)
 	if err != nil {
 		http.Error(w, "Error preparing request", http.StatusInternalServerError)
 		return
@@ -50,23 +50,23 @@ func (h *Handler) GetSignedWSSUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.Service.IsUserLoggedIn() {
+	if !h.QueryService.Auth.IsUserLoggedIn() {
 		http.Error(w, "User signed out, Please Login!", http.StatusUnauthorized)
 		return
 	}
 
-	idToken, err := h.Service.AuthenticateUser("", "")
+	idToken, err := h.QueryService.Auth.AuthenticateUser()
 	if err != nil {
 		http.Error(w, "Error : "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	headers, err := h.Service.GetSignedWssHeader(idToken)
+	headers, err := h.QueryService.Auth.GetSignedWssHeader(idToken)
 	if err != nil {
 		http.Error(w, "Error getting signed headers: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	sigedUrl, err := h.Service.GetSignedWssUrl(headers)
+	sigedUrl, err := h.QueryService.Auth.GetSignedWssUrl(headers)
 	if err != nil {
 		http.Error(w, "Error Signing wssUrl: "+err.Error(), http.StatusInternalServerError)
 		return
