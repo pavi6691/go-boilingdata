@@ -40,34 +40,34 @@ type Tag struct {
 	Value string `json:"value"`
 }
 
-func (s *QueryService) Query(query string) ([]byte, error) {
+func (s *QueryService) Query(query string) ([]Response, error) {
 
 	// If web socket is closed, in case of timeout/user signout/os intruptions etc
 	if s.Wsc.IsWebSocketClosed() {
 		idToken, err := s.Auth.AuthenticateUser()
 		if err != nil {
-			return nil, fmt.Errorf("Error : " + err.Error())
+			return []Response{}, fmt.Errorf("Error : " + err.Error())
 		}
 		header, err := s.Auth.GetSignedWssHeader(idToken)
 		if err != nil {
-			return nil, fmt.Errorf("Error Signing wssUrl: " + err.Error())
+			return []Response{}, fmt.Errorf("Error Signing wssUrl: " + err.Error())
 		}
 		s.Wsc.SignedHeader = header
 		s.Wsc.Connect()
 		if s.Wsc.IsWebSocketClosed() {
-			return nil, fmt.Errorf(s.Wsc.Error)
+			return []Response{}, fmt.Errorf(s.Wsc.Error)
 		}
 	}
 	s.Wsc.SendMessage(query)
-	responseJSON := s.ReadMessage()
-	if responseJSON == nil {
-		return nil, fmt.Errorf("internal Server Error, could not read message from websocket")
+	response := s.ReadMessage()
+	if response == nil {
+		return []Response{}, fmt.Errorf("internal Server Error, could not read message from websocket")
 	}
-	return responseJSON, nil
+	return response, nil
 
 }
 
-func (s *QueryService) ReadMessage() []byte {
+func (s *QueryService) ReadMessage() []Response {
 	var responses []Response
 	totMessages := -1
 	for {
@@ -80,7 +80,7 @@ func (s *QueryService) ReadMessage() []byte {
 		err = json.Unmarshal([]byte(message), &response)
 		if err != nil {
 			log.Println("Error parsing JSON:", err)
-			return nil
+			return []Response{}
 		}
 		responses = append(responses, response)
 		if response.TotalSubBatches <= 0 {
@@ -93,9 +93,5 @@ func (s *QueryService) ReadMessage() []byte {
 			break
 		}
 	}
-	responseJSON, err := json.MarshalIndent(responses, "", "    ")
-	if err != nil {
-		return nil
-	}
-	return responseJSON
+	return responses
 }
