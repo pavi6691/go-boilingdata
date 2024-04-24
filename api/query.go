@@ -32,7 +32,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.QueryService.Query(string(body))
+	response, err := h.QueryService.Query(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
