@@ -6,12 +6,10 @@ import (
 	"net/http"
 
 	"github.com/boilingdata/go-boilingdata/service"
-	"github.com/boilingdata/go-boilingdata/wsclient"
 )
 
 type Handler struct {
-	Wsc          *wsclient.WSSClient
-	QueryService service.QueryService
+	UserService service.UserService
 }
 
 func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +19,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.QueryService.Auth.IsUserLoggedIn() {
+	if !h.UserService.Auth.IsUserLoggedIn() {
 		http.Error(w, "User signed out, Please Login!", http.StatusUnauthorized)
 		return
 	}
@@ -32,7 +30,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.QueryService.Query(body)
+	response, err := h.UserService.Query(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

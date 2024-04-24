@@ -5,16 +5,34 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/boilingdata/go-boilingdata/constants"
 	"github.com/boilingdata/go-boilingdata/models"
 	"github.com/boilingdata/go-boilingdata/wsclient"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
-type QueryService struct {
+type UserService struct {
 	Wsc  *wsclient.WSSClient
 	Auth Auth
 }
 
-func (s *QueryService) Query(payloadMessage []byte) (models.Response, error) {
+var queryServiceMap = cmap.New()
+
+func GetUserService(userName string, password string) UserService {
+	qs, ok := queryServiceMap.Get(userName)
+	if !ok {
+		wsclient := wsclient.NewWSSClient(constants.WssUrl, 0, nil)
+		qs = UserService{Wsc: wsclient, Auth: Auth{userName: userName, password: password}}
+		queryServiceMap.Set(userName, qs)
+	}
+	return qs.(UserService)
+}
+
+func RemoveUser(userName string) {
+	queryServiceMap.Remove(userName)
+}
+
+func (s *UserService) Query(payloadMessage []byte) (models.Response, error) {
 
 	// If web socket is closed, in case of timeout/user signout/os intruptions etc
 	if s.Wsc.IsWebSocketClosed() {

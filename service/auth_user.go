@@ -12,12 +12,11 @@ import (
 )
 
 type Auth struct {
-	UserName string
-	Password string
+	userName                        string
+	password                        string
+	authResult                      *cognitoidentityprovider.AuthenticationResultType
+	timeWhenLastJwtTokenWasRecieved time.Time
 }
-
-var AuthResult *cognitoidentityprovider.AuthenticationResultType
-var timeWhenLastJwtTokenWasRecieved time.Time
 
 func (s *Auth) AuthenticateUser() (string, error) {
 	sess, err := session.NewSession(&aws.Config{
@@ -31,13 +30,13 @@ func (s *Auth) AuthenticateUser() (string, error) {
 	cognitoClient := cognitoidentityprovider.New(sess)
 	var authInput *cognitoidentityprovider.InitiateAuthInput
 	if s.IsUserLoggedIn() && !s.IsTokenExpired() {
-		return *AuthResult.IdToken, nil
+		return *s.authResult.IdToken, nil
 	} else if s.IsUserLoggedIn() {
 		log.Println("Token expired, Getting token with refresh token..")
 		authInput = &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow: aws.String("REFRESH_TOKEN_AUTH"),
 			AuthParameters: map[string]*string{
-				"REFRESH_TOKEN": aws.String(*AuthResult.RefreshToken),
+				"REFRESH_TOKEN": aws.String(*s.authResult.RefreshToken),
 				"POOL_ID":       aws.String(constants.PoolID),
 			},
 			ClientId: aws.String(constants.ClientID),
@@ -48,39 +47,45 @@ func (s *Auth) AuthenticateUser() (string, error) {
 		authInput = &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow: aws.String("USER_PASSWORD_AUTH"),
 			AuthParameters: map[string]*string{
-				"USERNAME": aws.String(s.UserName),
-				"PASSWORD": aws.String(s.Password),
+				"USERNAME": aws.String(s.userName),
+				"PASSWORD": aws.String(s.password),
 				"POOL_ID":  aws.String(constants.PoolID),
 			},
 			ClientId: aws.String(constants.ClientID),
 		}
 	}
-	timeWhenLastJwtTokenWasRecieved = time.Now()
+	s.timeWhenLastJwtTokenWasRecieved = time.Now()
 	authOutput, err := cognitoClient.InitiateAuth(authInput)
 	if err != nil {
-		AuthResult = nil
+		log.Println("Login unsucessful, ->" + err.Error())
+		s.authResult = nil
+		RemoveUser(s.userName)
 		return "", err
 	}
-	AuthResult = authOutput.AuthenticationResult
+	s.authResult = authOutput.AuthenticationResult
 	// Handle MFA challenges if required
 	if authOutput.ChallengeName != nil {
 		switch *authOutput.ChallengeName {
 		case "SMS_MFA":
 			mfaCode, err := promptMFA("Please enter MFA (sms)")
 			if err != nil {
+				RemoveUser(s.userName)
 				return "", err
 			}
 			err = sendMFA(cognitoClient, authOutput.Session, mfaCode, "SMS_MFA")
 			if err != nil {
+				RemoveUser(s.userName)
 				return "", err
 			}
 		case "SOFTWARE_TOKEN_MFA":
 			mfaCode, err := promptMFA("Please enter MFA (totp)")
 			if err != nil {
+				RemoveUser(s.userName)
 				return "", err
 			}
 			err = sendMFA(cognitoClient, authOutput.Session, mfaCode, "SOFTWARE_TOKEN_MFA")
 			if err != nil {
+				RemoveUser(s.userName)
 				return "", err
 			}
 		}
@@ -90,6 +95,7 @@ func (s *Auth) AuthenticateUser() (string, error) {
 	if authOutput.AuthenticationResult == nil {
 		newPassword, err := promptPassword("Please enter new password")
 		if err != nil {
+			RemoveUser(s.userName)
 			return "", err
 		}
 		// Assume, need to provide new password
@@ -102,15 +108,15 @@ func (s *Auth) AuthenticateUser() (string, error) {
 }
 
 func (s *Auth) IsUserLoggedIn() bool {
-	if AuthResult != nil && AuthResult.IdToken != nil {
+	if s.authResult != nil && s.authResult.IdToken != nil {
 		return true
 	}
 	return false
 }
 func (s *Auth) IsTokenExpired() bool {
-	if AuthResult != nil && AuthResult.ExpiresIn != nil {
-		expirationTime := timeWhenLastJwtTokenWasRecieved.Add(time.Second * time.Duration(*AuthResult.ExpiresIn))
-		if !time.Now().After(expirationTime) {
+	if s.authResult != nil && s.authResult.ExpiresIn != nil {
+		expirationTime := s.timeWhenLastJwtTokenWasRecieved.Add(time.Second * time.Duration(*s.authResult.ExpiresIn))
+		if time.Now().Unix() < expirationTime.Unix() {
 			return false
 		}
 	}
