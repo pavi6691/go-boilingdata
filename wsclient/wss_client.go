@@ -232,7 +232,7 @@ func (wsc *WSSClient) GetResponseSync(requestID string) (models.Response, error)
 					return models.Response{}, fmt.Errorf("No response from server. Check SQL syntax")
 				} else if temp.TotalSubBatches == 0 || temp.TotalSubBatches == len(v) {
 					var data []map[string]interface{}
-					for i := 1; i <= len(v); i++ {
+					for i := 0; i <= len(v); i++ {
 						data = append(data, v[i].Data...)
 					}
 					if len(v) > 0 {
