@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,9 +17,11 @@ type Auth struct {
 	password                        string
 	authResult                      *cognitoidentityprovider.AuthenticationResultType
 	timeWhenLastJwtTokenWasRecieved time.Time
+	mu                              sync.Mutex
 }
 
 func (s *Auth) AuthenticateUser() (string, error) {
+	s.mu.Lock()
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(constants.Region)},
 	)
@@ -104,6 +107,7 @@ func (s *Auth) AuthenticateUser() (string, error) {
 	}
 	// Authentication successful
 	log.Println("Authentication successful")
+	s.mu.Unlock()
 	return *authOutput.AuthenticationResult.IdToken, nil
 }
 

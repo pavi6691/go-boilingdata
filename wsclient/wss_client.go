@@ -60,9 +60,9 @@ func (wsc *WSSClient) Connect() {
 		wsc.ConnInit.Add(1)
 		go wsc.connect()
 		wsc.ConnInit.Wait()
-	}
-	if !wsc.IsWebSocketClosed() {
-		log.Println("Websocket Connected!")
+		if !wsc.IsWebSocketClosed() {
+			log.Println("Websocket Connected!")
+		}
 	}
 	wsc.mu.Unlock()
 }
@@ -230,7 +230,7 @@ func (wsc *WSSClient) GetResponseSync(requestID string) (models.Response, error)
 				}
 				if temp.TotalBatches <= 0 {
 					return models.Response{}, fmt.Errorf("No response from server. Check SQL syntax")
-				} else if temp.TotalSubBatches == len(v) {
+				} else if temp.TotalSubBatches == 0 || temp.TotalSubBatches == len(v) {
 					var data []map[string]interface{}
 					for i := 1; i <= len(v); i++ {
 						data = append(data, v[i].Data...)
