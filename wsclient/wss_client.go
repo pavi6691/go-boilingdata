@@ -192,11 +192,87 @@ func (wsc *WSSClient) receiveMessageAsync() {
 			if v, ok := wsc.resultsMap.Get(response.RequestID); !ok || v == nil {
 				var responses = cmap.New()
 				wsc.resultsMap.Set(response.RequestID, responses)
+				response.Keys = extractKeys(message)
 			}
 			v, _ := wsc.resultsMap.Get(response.RequestID)
 			v.(cmap.ConcurrentMap).Set(string(response.SubBatchSerial), response)
 		}
 	}
+}
+
+// Function to extract keys from the "data" array
+func extractKeys(jsonData []byte) []string {
+	// Define a struct to hold the "data" array
+	var data struct {
+		Data []json.RawMessage `json:"data"`
+	}
+
+	// Unmarshal the JSON data into the struct
+	err := json.Unmarshal(jsonData, &data)
+	if err != nil {
+		log.Println("Error extracting keys from response data:", err)
+		return nil
+	}
+
+	// If there's no data, return nil
+	if len(data.Data) == 0 {
+		log.Println("No data found")
+		return nil
+	}
+
+	// Define an empty map to store the keys of the first entry
+	var firstEntry json.RawMessage
+
+	// Unmarshal the first entry to extract the keys
+	err = json.Unmarshal(data.Data[0], &firstEntry)
+	if err != nil {
+		log.Println("Error extracting keys from response data:", err)
+		return nil
+	}
+	return parse(firstEntry)
+}
+
+func parse(raw json.RawMessage) []string {
+	var keys []string
+
+	// Start parsing the JSON message
+	// Position of the first character
+	pos := 0
+	// Check if there is an opening brace '{'
+	for pos < len(raw) && raw[pos] != '{' {
+		pos++
+	}
+	// If there is no opening brace '{', return empty keys
+	if pos == len(raw) {
+		return keys
+	}
+
+	// Move past the opening brace '{'
+	pos++
+	// Loop until the closing brace '}' is found or end of message
+	for pos < len(raw) && raw[pos] != '}' {
+		// Skip whitespace characters
+		for pos < len(raw) && (raw[pos] == ' ' || raw[pos] == '\t' || raw[pos] == '\n' || raw[pos] == '\r') {
+			pos++
+		}
+		// If there is a key, extract it
+		if raw[pos] == '"' {
+			// Move past the double quote '"'
+			pos++
+			start := pos
+			// Move to the next double quote '"'
+			for pos < len(raw) && raw[pos] != '"' {
+				pos++
+			}
+			// Extract the key
+			key := string(raw[start:pos])
+			// Add the key to the keys slice
+			keys = append(keys, key)
+		}
+		// Move to the next character
+		pos++
+	}
+	return keys
 }
 
 func (wsc *WSSClient) GetResponseSync(requestID string) (*models.Response, error) {
