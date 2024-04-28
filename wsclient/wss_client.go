@@ -195,7 +195,7 @@ func (wsc *WSSClient) receiveMessageAsync() {
 				wsc.resultsMap.Set(response.RequestID, responses)
 			}
 			v, _ := wsc.resultsMap.Get(response.RequestID)
-			if response.TotalSubBatches == 0 || response.TotalSubBatches == v.(cmap.ConcurrentMap).Count() {
+			if response.TotalSubBatches == 0 || response.TotalSubBatches == response.SubBatchSerial {
 				response.Keys = extractKeys(message)
 			}
 			v.(cmap.ConcurrentMap).Set(string(response.SubBatchSerial), response)
