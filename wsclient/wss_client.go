@@ -1,6 +1,7 @@
 package wsclient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -233,45 +234,46 @@ func extractKeys(jsonData []byte) []string {
 }
 
 func parse(raw json.RawMessage) []string {
+	// Convert RawMessage to byte slice
+	rawData := []byte(raw)
+
 	var keys []string
 
-	// Start parsing the JSON message
-	// Position of the first character
-	pos := 0
-	// Check if there is an opening brace '{'
-	for pos < len(raw) && raw[pos] != '{' {
-		pos++
-	}
-	// If there is no opening brace '{', return empty keys
-	if pos == len(raw) {
-		return keys
-	}
+	// Index keeps track of the position in the JSON byte slice
+	index := 0
 
-	// Move past the opening brace '{'
-	pos++
-	// Loop until the closing brace '}' is found or end of message
-	for pos < len(raw) && raw[pos] != '}' {
-		// Skip whitespace characters
-		for pos < len(raw) && (raw[pos] == ' ' || raw[pos] == '\t' || raw[pos] == '\n' || raw[pos] == '\r') {
-			pos++
+	// Loop until the end of the JSON byte slice
+	for index < len(rawData) {
+		// Find the next double quote, which indicates the start of a key
+		keyStart := bytes.IndexByte(rawData[index:], '"')
+		if keyStart == -1 {
+			// If no double quote is found, break the loop
+			break
 		}
-		// If there is a key, extract it
-		if raw[pos] == '"' {
-			// Move past the double quote '"'
-			pos++
-			start := pos
-			// Move to the next double quote '"'
-			for pos < len(raw) && raw[pos] != '"' {
-				pos++
-			}
-			// Extract the key
-			key := string(raw[start:pos])
-			// Add the key to the keys slice
+
+		// Adjust the index to the position of the double quote
+		index += keyStart + 1
+
+		// Find the end of the key by searching for the closing double quote
+		keyEnd := bytes.IndexByte(rawData[index:], '"')
+		if keyEnd == -1 {
+			// If no closing double quote is found, break the loop
+			break
+		}
+
+		// Extract the key from the JSON byte slice
+		key := string(rawData[index : index+keyEnd])
+
+		// Check if the key is followed by a colon (":")
+		if index+keyEnd+1 < len(rawData) && string(rawData[index+keyEnd:index+keyEnd+2]) == "\":" {
+			// Append the key to the keys slice
 			keys = append(keys, key)
 		}
-		// Move to the next character
-		pos++
+
+		// Adjust the index to the position after the closing double quote
+		index += keyEnd + 1
 	}
+
 	return keys
 }
 
